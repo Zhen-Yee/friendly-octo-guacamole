@@ -106,8 +106,6 @@ public class JbSettingServiceTest {
     public void getSupportedJukeboxesTest_withNoJukeboxes() {
         when(jukeBoxValidatorMock.validateJukeBoxHasComponents(jukeBox1, requiredComponents)).thenReturn(false);
         when(jukeBoxValidatorMock.validateJukeBoxHasComponents(jukeBox2, requiredComponents)).thenReturn(false);
-        when(jukeBoxValidatorMock.validateLimit(2,2)).thenReturn(2);
-        doNothing().when(jukeBoxValidatorMock).validateOffset(eq(0), eq(2), anyList());
 
         List<JukeBox> actualList = jbSettingService.getSupportedJukeboxes(TEST_SETTING_ID, null, 0, 2);
 
@@ -132,7 +130,6 @@ public class JbSettingServiceTest {
         when(jukeBoxValidatorMock.validateJukeBoxHasComponents(jukeBox1, requiredComponents)).thenReturn(true);
         when(jukeBoxValidatorMock.validateJukeBoxHasComponents(jukeBox2, requiredComponents)).thenReturn(true);
         when(jukeBoxValidatorMock.validateLimit(2,2)).thenReturn(2);
-        doNothing().when(jukeBoxValidatorMock).validateOffset(eq(0), eq(2), anyList());
 
         List<JukeBox> actualList = jbSettingService.getSupportedJukeboxes(TEST_SETTING_ID, "No Model", 0, 2);
 

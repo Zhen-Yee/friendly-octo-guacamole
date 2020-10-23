@@ -44,6 +44,7 @@ public class JukeBoxValidator {
     }
 
     public int validateLimit(Integer limit, int size) {
+        log.info("Validating limit.");
         return Optional.ofNullable(limit).orElse(size);
     }
 

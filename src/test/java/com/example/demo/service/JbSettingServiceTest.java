@@ -1,5 +1,9 @@
 package com.example.demo.service;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.example.demo.model.Component;
 import com.example.demo.model.JukeBox;
 import com.example.demo.model.Setting;
@@ -13,6 +17,7 @@ import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +44,8 @@ public class JbSettingServiceTest {
     private Settings settings;
     private List<Setting> settingList;
     private List<String> requiredComponents;
+    private final Logger logger = (Logger) LoggerFactory.getLogger(JbSettingService.class);
+    private ListAppender<ILoggingEvent> listAppender;
 
     private static final String TEST_SETTING_ID = "testSettingId";
     private static final String TEST_MODEL_1 = "testModel1";
@@ -55,6 +62,10 @@ public class JbSettingServiceTest {
 
     @Before
     public void setup() {
+        listAppender = new ListAppender<>();
+        listAppender.start();
+        logger.addAppender(listAppender);
+
         requiredComponents = Lists.list(componentName1, componentName2);
 
         Setting s1 = new Setting();
@@ -100,6 +111,8 @@ public class JbSettingServiceTest {
         assertEquals(2, actualList.size());
         assertEquals(jukeBox1, actualList.get(0));
         assertEquals(jukeBox2, actualList.get(1));
+        checkLog(2, listAppender.list.get(0), Level.INFO, "Validating supported components from jukebox.");
+        checkLog(2, listAppender.list.get(1), Level.INFO, "Retrieving jukeboxes from page offset.");
     }
 
     @Test
@@ -110,6 +123,7 @@ public class JbSettingServiceTest {
         List<JukeBox> actualList = jbSettingService.getSupportedJukeboxes(TEST_SETTING_ID, null, 0, 2);
 
         assertTrue(actualList.isEmpty());
+        checkLog(1, listAppender.list.get(0), Level.INFO, "Validating supported components from jukebox.");
     }
 
     @Test
@@ -123,6 +137,9 @@ public class JbSettingServiceTest {
 
         assertEquals(1, actualList.size());
         assertEquals(jukeBox1, actualList.get(0));
+        checkLog(3, listAppender.list.get(0), Level.INFO, "Validating supported components from jukebox.");
+        checkLog(3, listAppender.list.get(1), Level.INFO, "Retrieving supported jukebox for model: " + TEST_MODEL_1);
+        checkLog(3, listAppender.list.get(2), Level.INFO, "Retrieving jukeboxes from page offset.");
     }
 
     @Test
@@ -131,9 +148,20 @@ public class JbSettingServiceTest {
         when(jukeBoxValidatorMock.validateJukeBoxHasComponents(jukeBox2, requiredComponents)).thenReturn(true);
         when(jukeBoxValidatorMock.validateLimit(2,2)).thenReturn(2);
 
-        List<JukeBox> actualList = jbSettingService.getSupportedJukeboxes(TEST_SETTING_ID, "No Model", 0, 2);
+        String unsupportedModel = "No Model";
+
+        List<JukeBox> actualList = jbSettingService.getSupportedJukeboxes(TEST_SETTING_ID, unsupportedModel, 0, 2);
 
         assertTrue(actualList.isEmpty());
+        checkLog(2, listAppender.list.get(0), Level.INFO, "Validating supported components from jukebox.");
+        checkLog(2, listAppender.list.get(1), Level.INFO, "Retrieving supported jukebox for model: " + unsupportedModel);
+
+    }
+
+    private void checkLog(final int listAppenderSize, final ILoggingEvent iLoggingEvent, final Level level, final String message) {
+        assertEquals(listAppenderSize, listAppender.list.size());
+        assertEquals(message, iLoggingEvent.getFormattedMessage());
+        assertEquals(level, iLoggingEvent.getLevel());
     }
 
 }
